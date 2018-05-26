@@ -44,9 +44,9 @@ def new_transaction():
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    index = block_chain.new_transaction(values['sender'], values['receiver'], values['msg'])
+    index = block_chain.new_transactions(values['sender'], values['receiver'], values['msg'])
 
-    response = {'message': 'Transaction will be added to Block '+index}
+    response = {'message': 'Transaction will be added to Block '+str(index)}
     return jsonify(response), 201
 
 
