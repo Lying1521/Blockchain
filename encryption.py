@@ -18,16 +18,16 @@ def sha_256(msg):
 
 
 def sign(msg,sender_private_key):
-    signature = sender_private_key.sign(msg)
+    signature = sender_private_key.sign(msg, encoder =nacl.encoding.HexEncoder)
     return signature
 
 
 def verify(signature,sender_public_key):
     try:
-        raw_msg=sender_public_key.verify(signature)
+        raw_msg=sender_public_key.verify(signature,encoder=nacl.encoding.HexEncoder)
         return "signature is good",raw_msg
     except nacl.exceptions.BadSignatureError:
-        return "signature is bad!"
+        return "signature is bad!", None
 
 
 def send_secret_msg(receiver_public_key,msg):
@@ -63,3 +63,21 @@ def decode_private_key(raw_key):
         return private_key
     except nacl.exceptions.ValueError:
         return "wrong secret key"
+
+
+def verify_block(block):
+    pass
+
+
+def verify_transcations(transcations):
+    result = None
+    required = ['sender', 'receiver', 'msg', 'receiver_public_key', 'sender_public_key', 'id', 'signature']
+    if not all(k in transcations for k in required):
+        result = 'Missing values'
+    sender_public_key = decode_public_key(transcations['sender_public_key'])
+    res,msg = verify(transcations['signature'],sender_public_key)
+    if not msg:
+        result = res
+    elif not msg == transcations['msg']:
+        result = 'wrong message'
+    return result

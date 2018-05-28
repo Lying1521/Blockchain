@@ -1,9 +1,9 @@
-import json
 from uuid import uuid4
 
 from flask import Flask, jsonify, request
 
 import pow
+import encryption
 from blockchain import Blockchain
 
 app = Flask(__name__)
@@ -28,6 +28,10 @@ def mine():
             sender="0",
             receiver=node_identifier,
             msg="1",
+            sender_public_key="0",
+            receiver_public_key="0",
+            id="0",
+            signature="0"
         )
 
         block = block_chain.new_block(proof)
@@ -50,21 +54,27 @@ def mine():
 def new_transaction():
     values = request.get_json()
 
-    required = ['sender', 'receiver', 'msg']
-    if not all(k in values for k in required):
-        return 'Missing values', 400
+    result = encryption.verify_transcations(values)
 
-    index = block_chain.new_transactions(values['sender'], values['receiver'], values['msg'])
+    if not result:
 
-    response = {'message': 'Transaction will be added to Block '+str(index)}
+        index = block_chain.new_transactions(values['sender'], values['receiver'], values['msg']
+                                             , values['sender_public_key'], values['receiver_public_key']
+                                             , values['id'], values['signature'])
 
-    return jsonify(response), 201
+        response = {'message': 'Transaction will be added to Block '+str(index)}
+
+        block_chain.broadcast_transcation(values)
+
+        return jsonify(response), 201
+
+    else:
+        return jsonify(result), 400
 
 
 @app.route('/broadcast/block',methods=['POST'])
 def receive_broadcast_block():
     values = request.get_json()
-    print(json.dumps(values))
 
     required = ['index', 'transactions', 'last_proof', 'message', 'previous_hash', 'proof']
     if not all(k in values for k in required):
@@ -72,8 +82,6 @@ def receive_broadcast_block():
 
     if not pow.valid_proof(int(values['last_proof']),int(values['proof'])):
         return 'Wrong proof', 400
-
-    verify_only_one_rewards()
 
     if len(block_chain.chain)>values['index']:
         return 'update chain', 400
@@ -88,10 +96,6 @@ def receive_broadcast_block():
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
-    print(request.remote_addr)
-    print(request.host_url)
-    print(request.url_root)
-    print(request.base_url)
     response = {
         'chain': block_chain.chain,
         'length': len(block_chain.chain),

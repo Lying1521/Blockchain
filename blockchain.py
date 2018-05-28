@@ -24,11 +24,15 @@ class Blockchain(object):
         self.chain.append(block)
         return block
 
-    def new_transactions(self, sender, receiver, msg):
+    def new_transactions(self, sender, receiver, msg, sender_public_key, receiver_public_key, id, signature):
         self.current_transactions.append({
             'sender':sender,
             'receiver':receiver,
-            'msg': msg
+            'msg': msg,
+            'id': id,
+            'sender_public_key': sender_public_key,
+            'receiver_public_key': receiver_public_key,
+            'signature': signature
         })
         return self.last_block['index'] + 1
 
@@ -83,9 +87,12 @@ class Blockchain(object):
 
         return False
 
-    @staticmethod
-    def broadcast_transcation(tr):
-        print(tr)
+    def broadcast_transcation(self,tr):
+        for node in self.nodes:
+            headers = {"Content-Type": "application/json"}
+            res = requests.post(node+'/transactions/new', data=json.dumps(tr),headers=headers)
+            if res.status_code == 201:
+                return True
 
     def broadcast_block(self,block):
         for node in self.nodes:
