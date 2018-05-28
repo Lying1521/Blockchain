@@ -24,8 +24,8 @@ def sign(msg,sender_private_key):
 
 def verify(signature,sender_public_key):
     try:
-        sender_public_key.verify(signature)
-        return "signature is good"
+        raw_msg=sender_public_key.verify(signature)
+        return "signature is good",raw_msg
     except nacl.exceptions.BadSignatureError:
         return "signature is bad!"
 

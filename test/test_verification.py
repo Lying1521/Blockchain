@@ -22,7 +22,9 @@ msg = encrypt.sha_256("Hi Alice, I love you")
 
 msg_sign = encrypt.sign(msg, secert_key)
 
-res = encrypt.verify(msg_sign,public_key)
+res,s = encrypt.verify(msg_sign,public_key)
+print(s,'utf-8')
+print(msg,'utf-8')
 
 print(res)
 
