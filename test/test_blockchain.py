@@ -24,10 +24,10 @@ transcation= {
     "signature": signature,
     "receiver_public_key": receiver_key,
     "sender_public_key": sender_key,
-    "id": "123124123"
+    "id": "123174123"
  }
 
 headers = {"Content-Type": "application/json"}
 res = requests.post("http://127.0.0.1:5000/transactions/new", data=json.dumps(transcation),headers=headers)
-print(res)
+print(res.json()['message'])
 

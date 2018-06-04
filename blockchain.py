@@ -11,6 +11,7 @@ class Blockchain(object):
         self.current_transactions = []
         self.new_block(previous_hash=1, proof=100)
         self.nodes = set()
+        self.Isolated_block = []
 
     def new_block(self, proof, previous_hash=None):
         block = {
@@ -101,12 +102,27 @@ class Blockchain(object):
             if res.status_code == 201:
                 return True
 
-    def update_chain(self,url):
-        response = requests.get(url+'chain')
-        new_chain = None
-        if response.status_code == 200:
-            new_chain = response.json()['chain']
-            print(new_chain)
-        if new_chain:
-            self.chain = new_chain
+    def update_chain(self, block):
+        new_block = {
+            'index': block['index'],
+            'timestamp': block['timestamp'],
+            'transactions': block['transactions'],
+            'proof': block['proof'],
+            'previous_hash': block['previous_hash']
+        }
+        if block['previous_hash'] == hash(self.last_block()):
+            self.chain.append(new_block)
+            for k in self.Isolated_block:
+                if k['previous_hash'] == self.hash(self.last_block()):
+                    self.chain.append(k)
+        else:
+            self.Isolated_block.append(new_block)
+
+    def update_current_transcations(self, block):
+        read_in_trascations = block['transacations']
+        for k in read_in_trascations:
+            for m in self.current_transactions:
+                if m['id'] == k['id']:
+                    self.current_transactions.remove(m)
+
 

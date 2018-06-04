@@ -42,7 +42,8 @@ def mine():
             'transactions': block['transactions'],
             'proof': block['proof'],
             'previous_hash': block['previous_hash'],
-            'last_proof': last_proof
+            'last_proof': last_proof,
+            'timestamp': block['timestamp']
         }
         block_chain.broadcast_block(response)
         return jsonify(response), 200
@@ -54,7 +55,7 @@ def mine():
 def new_transaction():
     values = request.get_json()
 
-    result = encryption.verify_transcations(values)
+    result = encryption.check_transcations(values,block_chain.current_transactions)
 
     if not result:
 
@@ -69,29 +70,26 @@ def new_transaction():
         return jsonify(response), 201
 
     else:
-        return jsonify(result), 400
+        response = {'message': result}
+
+        return jsonify(response), 400
 
 
 @app.route('/broadcast/block',methods=['POST'])
 def receive_broadcast_block():
     values = request.get_json()
 
-    required = ['index', 'transactions', 'last_proof', 'message', 'previous_hash', 'proof']
-    if not all(k in values for k in required):
-        return 'Missing values', 400
+    result = encryption.check_block(values)
 
-    if not pow.valid_proof(int(values['last_proof']),int(values['proof'])):
-        return 'Wrong proof', 400
-
-    if len(block_chain.chain)>values['index']:
-        return 'update chain', 400
-    elif len(block_chain.chain)<values['index']:
-        block_chain.resolve_conflicts()
+    if not result:
+        block_chain.update_chain(values)
+        block_chain.update_current_transcations(values)
         block_chain.broadcast_block(values)
-
-    res = {'message': 'Success to Create New Block'}
-
-    return jsonify(res), 201
+        res = {'message': 'Success to Create New Block'}
+        return jsonify(res), 201
+    else:
+        res = {'message': result}
+        return jsonify(res), 400
 
 
 @app.route('/chain', methods=['GET'])

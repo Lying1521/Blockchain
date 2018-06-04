@@ -65,15 +65,32 @@ def decode_private_key(raw_key):
         return "wrong secret key"
 
 
-def verify_block(block):
-    pass
+def check_block(block,block_chain):
+    result = None
+    required = ['index', 'transactions', 'last_proof', 'message', 'previous_hash', 'proof','timestamp']
+    if not all(k in block for k in required):
+        result = 'Missing values'
+
+    if not pow.valid_proof(int(block['last_proof']), int(block['proof'])):
+        result = 'Wrong proof'
+
+    if len(block_chain.chain)>block['index']:
+        result = 'update chain'
+
+    if len(block_chain.chain) == block['index']:
+        result = 'hold chain'
+
+    return result
 
 
-def verify_transcations(transcations):
+def check_transcations(transcations,current_transcation):
     result = None
     required = ['sender', 'receiver', 'msg', 'receiver_public_key', 'sender_public_key', 'id', 'signature']
     if not all(k in transcations for k in required):
         result = 'Missing values'
+    for k in current_transcation:
+        if k['id'] == transcations['id']:
+            result = 'transcations has exist'
     sender_public_key = decode_public_key(transcations['sender_public_key'])
     res,msg = verify(transcations['signature'],sender_public_key)
     if not msg:
