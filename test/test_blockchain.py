@@ -2,6 +2,8 @@ import requests
 import encryption as encrypt
 import json
 import nacl.encoding
+from hog import Hog_descriptor
+import cv2
 
 psw_bob = "This is Bob's psw"
 psw_alice = "This is Alice's psw"
@@ -12,7 +14,11 @@ Alice_private_key2,Alice_public_key2 = encrypt.create_key(psw_alice)
 
 receiver_key = encrypt.encode_key(Alice_public_key2)
 sender_key = encrypt.encode_key(Bob_public_key2)
-msg = "Hi Alice, I love you"
+
+img = cv2.imread('/Users/liyu/Desktop/blockchain/Blockchain/ADE_train_00000158.jpg', cv2.IMREAD_GRAYSCALE)
+hog = Hog_descriptor(img, cell_size=8, bin_size=8)
+vector, image = hog.extract()
+msg = vector.__str__()
 msg_256 = encrypt.sha_256(msg)
 
 signature = encrypt.sign(nacl.encoding.HexEncoder.encode(msg_256),Bob_private_key2)
